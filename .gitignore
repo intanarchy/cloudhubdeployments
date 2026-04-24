@@ -1,0 +1,11 @@
+target/
+.mule/
+.studio/
+*.jar
+.classpath
+.project
+.settings/
+*.launch
+.DS_Store
+Thumbs.db
+settings.xml
