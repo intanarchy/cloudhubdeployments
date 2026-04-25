@@ -29,7 +29,7 @@ pipeline {
         
         stage('Code Quality Analysis') {
             steps {
-                withCredentials([string(credentialsId: 'sonar-token', variable: 'mulesoft-cicd-token')]) {
+                withCredentials([string(credentialsId: 'mulesoft-cicd-token', variable: 'mulesoft-cicd-token')]) {
                     bat 'mvn clean verify sonar:sonar -Dsonar.projectKey=cloudhubdeployments -Dsonar.projectName="CloudHub Deployments" -Dsonar.host.url=http://localhost:9000 -Dsonar.token=%mulesoft-cicd-token%'
                 }
             }
