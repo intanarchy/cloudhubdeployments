@@ -24,9 +24,9 @@ pipeline {
         
         stage('Code Quality Analysis') {
             steps {
-                // FIXED: credentialsId now matches your Jenkins setup perfectly
                 withCredentials([string(credentialsId: 'mulesoft-cicd-token', variable: 'mulesoft-cicd-token')]) {
-                    bat 'mvn clean verify sonar:sonar -Dsonar.projectKey=cloudhubdeployments -Dsonar.projectName="CloudHub Deployments" -Dsonar.host.url=http://localhost:9000 -Dsonar.token=%mulesoft-cicd-token%'
+                    // Notice the new -Dsonar.sources parameter at the very end
+                    bat 'mvn clean verify sonar:sonar -Dsonar.projectKey=cloudhubdeployments -Dsonar.projectName="CloudHub Deployments" -Dsonar.host.url=http://localhost:9000 -Dsonar.token=%mulesoft-cicd-token% -Dsonar.sources=src/main/mule'
                 }
             }
         }
