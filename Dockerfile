@@ -1,13 +1,13 @@
 FROM maven:3.9.6-eclipse-temurin-17
 
-# Install basic tools
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-
-# Set working directory
+# Install MuleSoft's Maven settings template
 WORKDIR /app
-
-# Copy Maven settings template
+COPY . .
 COPY settings.xml /root/.m2/settings.xml
 
-# Default command
-CMD ["mvn", "--version"]
+# Pre-cache dependencies (optional but speeds up builds)
+RUN mvn dependency:resolve -s /root/.m2/settings.xml \
+    -Danypoint.client_id=placeholder \
+    -Danypoint.client_secret=placeholder || true
+
+ENTRYPOINT ["mvn"]
