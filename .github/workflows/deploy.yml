@@ -1,5 +1,7 @@
 name: MuleSoft CI/CD to CloudHub 2.0
 
+run-name: "Deploy ${{ github.ref_name }} by ${{ github.actor }} @ ${{ github.sha }}"
+
 on:
   push:
     branches:
@@ -16,14 +18,14 @@ jobs:
 
       - name: Generate Maven settings.xml from secrets
         run: |
-          cat > settings.xml <<EOF
+          cat > settings.xml << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <settings>
             <servers>
               <server>
                 <id>anypoint-exchange-v3</id>
                 <username>~~~Client~~~</username>
-                <password>${{ secrets.ANYPOINT_CLIENT_SECRET }}</password>
+                <password>${anypoint.client_secret}</password>
               </server>
             </servers>
           </settings>
@@ -44,17 +46,31 @@ jobs:
             -s /root/.m2/settings.xml \
             -Danypoint.client_id=${{ secrets.ANYPOINT_CLIENT_ID }} \
             -Danypoint.client_secret=${{ secrets.ANYPOINT_CLIENT_SECRET }} \
+            -Dmule.artifact.exchange.skip=true \
             -DskipTests
 
-      - name: Deployment success notification
+      - name: Deployment Success
         if: success()
         run: |
-          echo "✅ Deployment successful!"
-          echo "App: cloudhubdeployments"
-          echo "Environment: Sandbox"
-          echo "Target: Cloudhub-US-East-2"
+          echo "============================================"
+          echo "  DEPLOYMENT SUCCESSFUL"
+          echo "============================================"
+          echo "  App     : cloudhubdeployments"
+          echo "  Env     : Sandbox"
+          echo "  Target  : Cloudhub-US-East-2"
+          echo "  Branch  : ${{ github.ref_name }}"
+          echo "  Commit  : ${{ github.sha }}"
+          echo "  By      : ${{ github.actor }}"
+          echo "============================================"
 
-      - name: Deployment failure notification
+      - name: Deployment Failed
         if: failure()
         run: |
-          echo "❌ Deployment failed. Check the logs above for details."
+          echo "============================================"
+          echo "  DEPLOYMENT FAILED"
+          echo "============================================"
+          echo "  Branch  : ${{ github.ref_name }}"
+          echo "  Commit  : ${{ github.sha }}"
+          echo "  By      : ${{ github.actor }}"
+          echo "  Check logs above for the error details."
+          echo "============================================"
