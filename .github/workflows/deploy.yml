@@ -25,7 +25,7 @@ jobs:
               <server>
                 <id>anypoint-exchange-v3</id>
                 <username>~~~Client~~~</username>
-                <password>${anypoint.client_secret}</password>
+                <password>${anypoint.client_id}~${anypoint.client_secret}</password>
               </server>
             </servers>
           </settings>
@@ -42,11 +42,11 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}/settings.xml:/root/.m2/settings.xml \
             mulesoft-deployer:latest \
-            deploy \
+            clean deploy \
             -s /root/.m2/settings.xml \
             -Danypoint.client_id=${{ secrets.ANYPOINT_CLIENT_ID }} \
             -Danypoint.client_secret=${{ secrets.ANYPOINT_CLIENT_SECRET }} \
-            -Dmule.artifact.exchange.skip=true \
+            -DmuleDeploy \
             -DskipTests
 
       - name: Deployment Success
