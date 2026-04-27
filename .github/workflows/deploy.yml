@@ -23,9 +23,7 @@ jobs:
 
       - name: Deploy to CloudHub 2.0
         run: |
-          docker run --rm \
-            -e ANYPOINT_CLIENT_ID=${{ secrets.ANYPOINT_CLIENT_ID }} \
-            -e ANYPOINT_CLIENT_SECRET=${{ secrets.ANYPOINT_CLIENT_SECRET }} \
+            docker run --rm \
             mulesoft-deployer:latest \
             deploy \
             -s /root/.m2/settings.xml \
