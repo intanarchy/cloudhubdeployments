@@ -1,0 +1,27 @@
+name: MuleSoft CI/CD - Deploy to CloudHub 2.0
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    container:
+      image: intanarchy/mule-build:jdk17   # ← your Docker image
+      credentials:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Inject Anypoint Credentials into settings.xml
+        run: |
+          sed -i "s|\${ANYPOINT_CLIENT_ID}|${{ secrets.ANYPOINT_CONNECTED_APP_CLIENT_ID }}|g" /root/.m2/settings.xml
+          sed -i "s|\${ANYPOINT_CLIENT_SECRET}|${{ secrets.ANYPOINT_CONNECTED_APP_CLIENT_SECRET }}|g" /root/.m2/settings.xml
+
+      - name: Deploy to CloudHub 2.0
+        run: mvn clean deploy -DmuleDeploy
