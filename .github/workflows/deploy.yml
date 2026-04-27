@@ -31,17 +31,31 @@ jobs:
           </settings>
           EOF
 
+      # NEW: Log into your personal Docker Hub account
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image
-        run: docker build -t mulesoft-deployer:latest .
+      # NEW: Build the image and PUSH it to Docker Hub
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          # This names the image using your specific Docker Hub username
+          tags: ${{ secrets.DOCKER_USERNAME }}/mulesoft-deployer:latest
 
+      # UPDATED: Run the deployment using the image that was just pushed
       - name: Deploy to CloudHub 2.0
         run: |
           docker run --rm \
             -v ${{ github.workspace }}/settings.xml:/root/.m2/settings.xml \
-            mulesoft-deployer:latest \
+            ${{ secrets.DOCKER_USERNAME }}/mulesoft-deployer:latest \
             clean deploy \
             -s /root/.m2/settings.xml \
             -Danypoint.client_id=${{ secrets.ANYPOINT_CLIENT_ID }} \
@@ -55,22 +69,10 @@ jobs:
           echo "============================================"
           echo "  DEPLOYMENT SUCCESSFUL"
           echo "============================================"
-          echo "  App     : cloudhubdeployments"
-          echo "  Env     : Sandbox"
-          echo "  Target  : Cloudhub-US-East-2"
-          echo "  Branch  : ${{ github.ref_name }}"
-          echo "  Commit  : ${{ github.sha }}"
-          echo "  By      : ${{ github.actor }}"
-          echo "============================================"
 
       - name: Deployment Failed
         if: failure()
         run: |
           echo "============================================"
           echo "  DEPLOYMENT FAILED"
-          echo "============================================"
-          echo "  Branch  : ${{ github.ref_name }}"
-          echo "  Commit  : ${{ github.sha }}"
-          echo "  By      : ${{ github.actor }}"
-          echo "  Check logs above for the error details."
           echo "============================================"
