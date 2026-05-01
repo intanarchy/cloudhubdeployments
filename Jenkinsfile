@@ -2,25 +2,15 @@ pipeline {
     agent any
 
     stages {
-        stage('Set Build Name') {
-            steps {
-                script {
-                    currentBuild.displayName = "Manual-Mule-Deploy-#${env.BUILD_NUMBER}"
-                    currentBuild.description = "Manual Docker deployment to CloudHub 2.0"
-                }
-            }
-        }
-
         stage('Checkout Code') {
             steps {
-                // Pulls your latest code from GitHub into the Jenkins workspace
                 checkout scm
             }
         }
-        
-        stage('Prepare Docker Environment') {
+
+        stage('Prepare Settings') {
             steps {
-                // Dynamically create the settings.xml file with placeholder passwords
+                // Generates the settings.xml file locally for Maven to use
                 bat '''
                 echo ^<?xml version="1.0" encoding="UTF-8"?^> > settings.xml
                 echo ^<settings^> >> settings.xml
@@ -36,21 +26,20 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build Local Docker Image') {
             steps {
-                // Build the "delivery truck" using the Dockerfile in your repository
+                // Builds the image and saves it to your local Docker Desktop
                 bat 'docker build -t mulesoft-local-deployer:latest .'
             }
         }
 
         stage('Deploy to CloudHub 2.0') {
             steps {
-                // Grab the real passwords securely stored in Jenkins
+                // Injects Jenkins credentials and runs the temporary deployment container
                 withCredentials([
                     string(credentialsId: 'anypoint-client-id', variable: 'CLIENT_ID'),
                     string(credentialsId: 'anypoint-client-secret', variable: 'CLIENT_SECRET')
                 ]) {
-                    // Run the container, pass in the real passwords, deploy, and self-destruct (--rm)
                     bat '''
                     docker run --rm mulesoft-local-deployer:latest clean deploy -Danypoint.client_id=%CLIENT_ID% -Danypoint.client_secret=%CLIENT_SECRET% -DmuleDeploy -DskipTests
                     '''
@@ -61,7 +50,7 @@ pipeline {
     
     post {
         always {
-            // Delete the settings.xml file so passwords aren't left sitting on your hard drive
+            // Self-cleanup
             bat 'if exist settings.xml del settings.xml'
         }
     }
