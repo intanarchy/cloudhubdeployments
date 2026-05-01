@@ -5,7 +5,6 @@ pipeline {
         stage('Set Build Name') {
             steps {
                 script {
-                    // This renames the build in the Jenkins UI
                     currentBuild.displayName = "Manual-Mule-Deploy-#${env.BUILD_NUMBER}"
                     currentBuild.description = "Manual Docker deployment to CloudHub 2.0"
                 }
@@ -38,22 +37,14 @@ pipeline {
         stage('Check & Build Docker Image') {
             steps {
                 script {
-                    // Ask Docker if the image exists and capture the output
-                    def imageId = bat(script: 'docker images -q mulesoft-local-deployer:latest', returnStdout: true).trim()
-                    
-                    // Clean up the output to get just the ID string
-                    if (imageId.contains("\n")) {
-                        def lines = imageId.split("\n")
-                        imageId = lines[lines.length - 1].trim()
-                    }
+                    // Silently check if the image exists. If it does, status will be 0.
+                    def imageExists = bat(script: 'docker image inspect mulesoft-local-deployer:latest >nul 2>nul', returnStatus: true) == 0
 
-                    // If the ID is empty, the image doesn't exist, so build it.
-                    if (imageId == "") {
+                    if (!imageExists) {
                         echo "Image not found locally. Building a new delivery truck..."
                         bat 'docker build -t mulesoft-local-deployer:latest .'
                     } else {
-                        // If it has an ID, skip the build step entirely
-                        echo "Image already exists (ID: ${imageId}). Skipping Docker build step!"
+                        echo "Image already exists locally! Skipping Docker build step to save time."
                     }
                 }
             }
@@ -65,8 +56,6 @@ pipeline {
                     string(credentialsId: 'anypoint-client-id', variable: 'CLIENT_ID'),
                     string(credentialsId: 'anypoint-client-secret', variable: 'CLIENT_SECRET')
                 ]) {
-                    // If the app doesn't exist, this creates it. 
-                    // If the app is already running, this safely updates it.
                     bat '''
                     docker run --rm mulesoft-local-deployer:latest clean deploy -Danypoint.client_id=%CLIENT_ID% -Danypoint.client_secret=%CLIENT_SECRET% -DmuleDeploy -DskipTests
                     '''
